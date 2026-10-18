@@ -14,7 +14,7 @@ seo = ('<meta name="description" content="%s">' % esc(SITE['desc'])
   + '<link rel="canonical" href="%s">' % SITE['url']
   + '<meta property="og:type" content="website"><meta property="og:site_name" content="%s">' % esc(SITE['title'])
   + '<meta property="og:title" content="%s"><meta property="og:description" content="%s"><meta property="og:url" content="%s">' % (esc(SITE['title']), esc(SITE['desc']), SITE['url'])
-  + '<meta name="twitter:card" content="summary"><meta name="theme-color" content="#14182B">'
+  + '<meta property="og:image" content="%s">' % (SITE['url'] + 'og.png') + '<meta name="twitter:image" content="%s">' % (SITE['url'] + 'og.png') + '<meta name="twitter:card" content="summary_large_image"><meta name="theme-color" content="#14182B">'
   + '<script type="application/ld+json">%s</script>' % ld)
 reset = '<style>:root{color-scheme:light}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>'
 # the template's own <title> and <meta> lines stay inside head
