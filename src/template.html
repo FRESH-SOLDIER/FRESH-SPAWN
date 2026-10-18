@@ -1,0 +1,428 @@
+<title>Fresh Spawn</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Figtree:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Layout: one narrow column. Every game carries a review-count bar on a log scale, so small games read as small at a glance. Tags explain every match. */
+:root{
+  --bg:#E6ECEF; --surface:#F5F8FA; --fg:#101820; --muted:#56626E; --line:#C5D0D8;
+  --accent:#C2185B; --accent-fg:#FFFFFF; --hi:#0B8F9A; --bar:#BCC9D2; --tag:#DCE5EA;
+  --f-display:'Unbounded','Trebuchet MS',sans-serif; --f-body:'Figtree',system-ui,sans-serif; --f-data:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0D1218; --surface:#161D26; --fg:#E6EDF3; --muted:#96A3B0; --line:#26313D;
+  --accent:#FF7FA8; --accent-fg:#0D1218; --hi:#4FD1DC; --bar:#34414F; --tag:#202A35; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0D1218; --surface:#161D26; --fg:#E6EDF3; --muted:#96A3B0; --line:#26313D;
+  --accent:#FF7FA8; --accent-fg:#0D1218; --hi:#4FD1DC; --bar:#34414F; --tag:#202A35; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font:400 16px/1.5 var(--f-body);
+  padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font:900 clamp(2rem,8vw,3.1rem)/1 var(--f-display);letter-spacing:-.02em;margin:0}
+.lede{margin:10px 0 0;color:var(--muted);max-width:58ch;text-wrap:pretty}
+.cap{font:500 .72rem/1 var(--f-data);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.panel{display:flex;flex-direction:column;gap:24px}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:4px 16px;border-bottom:2px solid var(--line);padding-top:6px}
+body::before{content:"";position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:19}
+.tabs{display:flex;gap:6px}
+.bsearch{position:relative;flex:1 1 200px;max-width:300px;margin-bottom:8px}
+#gq{width:100%;font:500 .95rem var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:8px 14px}
+.jump{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.jump button{font:500 .85rem var(--f-body);color:var(--accent);background:transparent;border:0;padding:4px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.chips.scroll{flex-wrap:nowrap;overflow-x:auto;padding-bottom:6px;scrollbar-width:thin;-webkit-overflow-scrolling:touch}
+.chips.scroll .chip{flex:none;white-space:nowrap}
+.sec,#soonsec{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 76px)}
+.pic{width:116px;aspect-ratio:16/9;border-radius:8px;display:grid;place-items:center;color:#fff;font:900 .9rem var(--f-display);text-shadow:0 1px 2px rgba(0,0,0,.4);background-repeat:no-repeat;background-size:1000% auto;background-color:var(--tag)}
+ul.res.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px}
+ul.res.grid .row{display:flex;flex-direction:column;align-items:stretch;gap:6px;padding:0 0 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);overflow:hidden}
+ul.res.grid .row>*{margin-inline:12px}
+ul.res.grid .row>.pic{width:100%;margin:0;border-radius:0}
+ul.res.grid .fans{text-align:left}
+ul.res.grid .fans small{display:inline;margin-left:6px}
+ul.res.grid .empty{grid-column:1/-1}
+.top{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:30;width:46px;height:46px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-fg);font:900 1.2rem var(--f-body);cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.28)}
+
+.tabs button{font:700 .95rem var(--f-display);color:var(--muted);background:transparent;border:0;border-bottom:4px solid transparent;margin-bottom:-2px;padding:10px 14px;cursor:pointer}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:12px 28px}
+.seg{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.seg button{font:500 .85rem var(--f-data);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px}
+.chip{font:500 .88rem var(--f-body);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.chip:hover{border-color:var(--accent);color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.chip small{font:400 .72rem var(--f-data);opacity:.75;margin-left:4px}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.search{position:relative}
+#q{width:100%;margin-top:8px;font:500 1.15rem var(--f-body);color:var(--fg);background:var(--surface);border:2px solid var(--line);border-radius:10px;padding:14px 16px}
+#sug,#gsug{position:absolute;left:0;right:0;top:100%;z-index:5;margin:6px 0 0;padding:4px;list-style:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(10,14,40,.18)}
+#sug li,#gsug li{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;border-radius:7px;cursor:pointer}
+#sug li[aria-selected="true"],#sug li:hover,#gsug li[aria-selected="true"],#gsug li:hover{background:var(--accent);color:var(--accent-fg)}
+#sug .f,#gsug .f{font:400 .78rem var(--f-data);opacity:.8;white-space:nowrap}
+.sec{display:flex;flex-direction:column;gap:2px}
+.sec .sub{color:var(--muted);font-size:.9rem;margin:6px 0 0;max-width:60ch}
+.head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;border-bottom:1px solid var(--line);padding-bottom:10px}
+.head h2{font:900 1.2rem/1.15 var(--f-display);margin:0;text-wrap:balance}
+.head .meta{font:400 .82rem var(--f-data);color:var(--muted)}
+ul.res{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:116px minmax(0,1fr) auto;gap:6px 14px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line)}
+.tile{width:52px;height:52px;border-radius:10px;display:grid;place-items:center;color:#fff;font:900 1rem var(--f-display);text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.name{font:700 1.08rem/1.2 var(--f-body);overflow-wrap:anywhere}
+.why{color:var(--muted);font-size:.86rem;margin-top:2px;text-wrap:pretty}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+.tg{font:400 .72rem var(--f-data);background:var(--tag);border-radius:5px;padding:3px 6px;color:var(--fg)}
+.tg.sh{outline:1.5px solid var(--hi)}
+.fans{font:500 .86rem var(--f-data);text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.fans small{display:block;color:var(--muted);font-weight:400;font-size:.7rem}
+.scale{grid-column:2 / 4;position:relative;height:6px;border-radius:3px;background:var(--bar);margin-top:6px}
+.scale i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;background:var(--accent)}
+.scale.tiny i{background:var(--hi)}
+.links{grid-column:2 / 4;display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;font-size:.86rem}
+.links a{color:var(--accent);text-decoration:none;font-weight:500}
+.links a:hover{text-decoration:underline}
+.links button.sim{font:500 .86rem var(--f-body);color:var(--accent);background:transparent;border:0;padding:0;cursor:pointer}
+.links button.sim:hover{text-decoration:underline}
+.save{margin-left:auto;font:500 .82rem var(--f-data);color:var(--fg);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer}
+.save[aria-pressed="true"]{background:var(--hi);color:#041214;border-color:var(--hi)}
+.badge{display:inline-block;margin-left:8px;font:500 .66rem/1 var(--f-data);letter-spacing:.06em;text-transform:uppercase;color:#041214;background:var(--hi);border-radius:5px;padding:3px 6px;vertical-align:middle}
+.axis{display:flex;justify-content:space-between;font:400 .68rem var(--f-data);color:var(--muted);padding-top:6px}
+.empty{padding:28px 0;color:var(--muted)}
+.more{align-self:center;font:500 .9rem var(--f-body);color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 18px;cursor:pointer}
+.shuf,.copy{font:500 .85rem var(--f-body);color:var(--accent-fg);background:var(--accent);border:0;border-radius:8px;padding:8px 14px;cursor:pointer}
+details.list{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+details.list summary{cursor:pointer;font-weight:700}
+details.list ol{margin:10px 0;padding-left:1.2em}
+.foot{color:var(--muted);font-size:.82rem;border-top:1px solid var(--line);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+@media (max-width:480px){.row{grid-template-columns:92px minmax(0,1fr)}.pic{width:92px;font-size:.8rem}.bsearch{max-width:none;flex-basis:100%}.tabs button{padding:8px 10px;font-size:.88rem}.fans{grid-column:2;text-align:left}.fans small{display:inline;margin-left:6px}.scale,.links{grid-column:1 / 3}}
+@media (prefers-reduced-motion:no-preference){.row{animation:in .28s ease both}@keyframes in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}}
+</style>
+
+<main>
+  <header>
+    <h1>Fresh Spawn</h1>
+    <p class="lede">New and upcoming games you probably haven't seen, with a way to find more like the ones you love. Everything here has far fewer ratings than the big names.</p>
+  </header>
+
+  <div class="bar" id="bar">
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button type="button" role="tab" id="tabHome" aria-selected="true" aria-controls="viewHome">Discover</button>
+      <button type="button" role="tab" id="tabFind" aria-selected="false" aria-controls="viewFind">Find similar</button>
+    </nav>
+    <div class="bsearch">
+      <input id="gq" type="search" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="gsug" aria-autocomplete="list" aria-label="Search for a game to find similar ones" placeholder="Search a game">
+      <ul id="gsug" role="listbox" hidden></ul>
+    </div>
+  </div>
+
+  <section class="controls" aria-label="Filters">
+    <div>
+      <div class="cap" id="limlab">Show games with at most</div>
+      <div class="seg" id="seg" role="group" aria-labelledby="limlab"></div>
+    </div>
+    <div>
+      <div class="cap" id="qlab">Rating</div>
+      <div class="seg" id="qseg" role="group" aria-labelledby="qlab"></div>
+    </div>
+    <div>
+      <div class="cap" id="vlab">View</div>
+      <div class="seg" id="vseg" role="group" aria-labelledby="vlab"></div>
+    </div>
+  </section>
+
+  <div id="viewHome" class="panel" role="tabpanel" aria-labelledby="tabHome">
+    <div>
+      <div class="cap" id="genlab">Genre or style</div>
+      <div class="chips scroll" id="genres" role="group" aria-labelledby="genlab"></div>
+    </div>
+    <div class="jump" id="jump"><span class="cap">Jump to</span></div>
+    <section class="sec" id="secNew" aria-live="polite">
+      <div class="head"><h2>New releases</h2><span class="meta" id="newmeta"></span></div>
+      <p class="sub">Released in the last 90 days, newest first.</p>
+      <ul class="res" id="newlist"></ul>
+      <button class="more" id="newmore" type="button" hidden>Show more</button>
+    </section>
+    <section class="sec" id="soonsec" hidden>
+      <div class="head"><h2>Coming soon</h2><span class="meta" id="soonmeta"></span></div>
+      <ul class="res" id="soonlist"></ul>
+    </section>
+    <section class="sec" id="secGems">
+      <div class="head"><h2>Hidden gems</h2><button class="shuf" id="shuf" type="button">Shuffle</button></div>
+      <p class="sub">Games rated 4.2 out of 5 or better with only a few hundred ratings.</p>
+      <ul class="res" id="gems"></ul>
+    </section>
+  </div>
+
+  <div id="viewFind" class="panel" role="tabpanel" aria-labelledby="tabFind" hidden>
+    <section class="search" aria-label="Find similar games">
+      <label class="cap" for="q">A game you already like</label>
+      <input id="q" type="text" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="sug" aria-autocomplete="list" placeholder="Start typing a title">
+      <ul id="sug" role="listbox" hidden></ul>
+      <div class="chips" id="chips"><span class="cap">Try</span></div>
+    </section>
+    <section aria-live="polite">
+      <div class="head"><h2 id="title"></h2><span class="meta" id="meta"></span></div>
+      <ul class="res" id="res"></ul>
+      <div class="axis" id="axis" aria-hidden="true"><span>1 rating</span><span>100</span><span>1K</span><span>10K</span></div>
+    </section>
+    <button class="more" id="more" type="button" hidden>Show more</button>
+  </div>
+
+  <details class="list" id="listbox">
+    <summary id="listsum">Your shortlist</summary>
+    <ol id="listol"></ol>
+    <button class="copy" id="copy" type="button">Copy list</button>
+    <span class="cap" id="copied" style="margin-left:10px"></span>
+  </details>
+
+  <button class="top" id="top" type="button" aria-label="Back to top" hidden>↑</button>
+
+  <footer class="foot">
+    <span>Game data and cover images come from <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a>, the largest video game database. Similarity is computed from each game's genres and tags, weighting rarer ones more. Ratings are RAWG user ratings only.</span>
+    <span id="snap"></span>
+    <span>Not affiliated with RAWG. Only games in this snapshot can be searched. Every game links back to its RAWG page.</span>
+  </footer>
+</main>
+
+<script>
+const G = /*DATA*/;
+(function(){
+  const rows=G.g, TAG=G.t, SH=G.s, TODAY=Number(G.today.replace(/-/g,''));
+  const $=id=>document.getElementById(id);
+  const toDays=y=>Date.UTC(Math.floor(y/10000),Math.floor(y/100)%100-1,y%100)/864e5;
+  const TD=toDays(TODAY);
+  const norm=s=>s.normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  const NN=rows.map(r=>norm(r[1]));
+  const fmt=n=>n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?(n/1e3).toFixed(n>=1e5?0:1)+'K':String(n);
+  const enc=encodeURIComponent;
+  const tn=t=>TAG[t]||'';
+  const IM=G.im||{}, COLS=10, ROWS=10;
+  let view='list', ui={}; try{ui=JSON.parse(localStorage.getItem('freshspawn:ui')||'{}')}catch(e){}
+  const saveUi=()=>{try{localStorage.setItem('freshspawn:ui',JSON.stringify(ui))}catch(e){}};
+  if(ui.view==='grid') view='grid';
+  let limit=500, qual=false, genre=0, newShown=20, gemSeed=Math.random(), cur=-1, shown=24, results=[];
+  let list=[]; try{list=JSON.parse(localStorage.getItem('freshspawn:list')||'[]')}catch(e){}
+  const saveList=()=>{try{localStorage.setItem('freshspawn:list',JSON.stringify(list))}catch(e){}};
+  $('snap').textContent='Snapshot: '+G.today+' · '+rows.length.toLocaleString()+' games';
+
+  const passSize=r=>!limit||r[4]<=limit;
+  const passQ=r=>!qual||(r[4]>=3&&r[3]>=70);
+  const hasTag=r=>!genre||r[6].includes(genre);
+  const pos=c=>Math.max(0,Math.min(1,Math.log10(Math.max(c,1))/4.2));
+  const price=c=>c<0?'':c===0?'Free':'$'+(c/100).toFixed(2);
+  function when(ymd){
+    if(!ymd) return 'Date to be announced';
+    const days=Math.round(TD-toDays(ymd));
+    const d=new Date(Date.UTC(Math.floor(ymd/10000),Math.floor(ymd/100)%100-1,ymd%100));
+    const m=d.toLocaleString('en-US',{month:'short',day:'numeric',timeZone:'UTC'});
+    if(days<0) return 'Out '+m;
+    if(days===0) return 'Today';
+    if(days<=30) return days+(days===1?' day ago':' days ago');
+    return days>150?m+', '+d.getUTCFullYear():m;
+  }
+  const reviewText=r=>r[4]>0?(r[3]>=0?(r[3]/20).toFixed(1)+'/5 · ':'')+fmt(r[4])+' ratings':'No ratings yet';
+  const initials=n=>n.replace(/[^\p{L}\p{N} ]/gu,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase()||'?';
+  const tileStyle=id=>{const h=(id*53)%360;return 'background:conic-gradient(from '+(id%360)+'deg,hsl('+h+' 55% 36%),hsl('+((h+80)%360)+' 60% 30%),hsl('+h+' 55% 36%))'};
+
+  // ---------- similarity ----------
+  const DF=new Map(); rows.forEach(r=>new Set(r[6]).forEach(t=>DF.set(t,(DF.get(t)||0)+1)));
+  const IDF=new Map(); DF.forEach((c,t)=>IDF.set(t,Math.log((rows.length+1)/(c+1))+1));
+  const VEC=rows.map(r=>{const m=new Map(); r[6].forEach((t,i)=>m.set(t,IDF.get(t)/(1+.18*i))); return m});
+  const NORM=VEC.map(m=>{let s=0; m.forEach(w=>s+=w*w); return Math.sqrt(s)||1});
+  function similar(q){
+    const vq=VEC[q], out=[];
+    for(let i=0;i<rows.length;i++){
+      if(i===q) continue; const r=rows[i];
+      if(!passSize(r)||!passQ(r)) continue;
+      let dot=0, shared=[];
+      VEC[i].forEach((w,t)=>{const a=vq.get(t); if(a){dot+=a*w; shared.push([t,a*w])}});
+      if(shared.length<2) continue;
+      shared.sort((a,b)=>b[1]-a[1]);
+      out.push({k:i,sc:dot/(NORM[q]*NORM[i]),shared:shared.map(x=>x[0])});
+    }
+    out.sort((a,b)=>(b.sc-a.sc)||(rows[a.k][4]-rows[b.k][4]));
+    return out;
+  }
+
+  function pic(r){
+    const d=document.createElement('div'); d.className='pic'; d.setAttribute('aria-hidden','true');
+    const m=IM[r[0]];
+    if(m){const c=m[1]%COLS, w=Math.floor(m[1]/COLS); d.style.backgroundImage='url(sheets/r'+m[0]+'.jpg)'; d.style.backgroundPosition=(c/(COLS-1)*100).toFixed(3)+'% '+(w/(ROWS-1)*100).toFixed(3)+'%'}
+    else{d.style.cssText=tileStyle(r[0]); d.textContent=initials(r[1])}
+    return d;
+  }
+  // ---------- card ----------
+  function card(k,opts){
+    const r=rows[k], li=document.createElement('li'); li.className='row';
+    const saved=list.includes(r[0]);
+    li.innerHTML='<div><div class="name"></div><div class="why"></div><div class="tags"></div></div>'
+      +'<div class="fans"></div>'
+      +'<div class="scale'+(r[4]<100?' tiny':'')+'" aria-hidden="true"><i style="width:'+(pos(r[4])*100).toFixed(1)+'%"></i></div>'
+      +'<div class="links"></div>';
+    li.insertBefore(pic(r),li.firstChild);
+    const nm=li.querySelector('.name'); nm.textContent=r[1];
+    if(r[2]&&r[2]<=TODAY&&TD-toDays(r[2])<=14){const b=document.createElement('span'); b.className='badge'; b.textContent='New'; nm.appendChild(b)}
+    li.querySelector('.why').textContent=[when(r[2]),price(r[5]),reviewText(r)].filter(Boolean).join(' · ');
+    const tg=li.querySelector('.tags'); const shared=new Set(opts&&opts.shared||[]);
+    const order=opts&&opts.shared?[...opts.shared.slice(0,4),...r[6].filter(t=>!shared.has(t)).slice(0,Math.max(0,4-shared.size))]:r[6].slice(0,4);
+    order.forEach(t=>{const s=document.createElement('span'); s.className='tg'+(shared.has(t)?' sh':''); s.textContent=tn(t); tg.appendChild(s)});
+    const f=li.querySelector('.fans'); f.textContent=r[4]>0?fmt(r[4]):'0'; const sm=document.createElement('small'); sm.textContent='ratings'; f.appendChild(sm);
+    const links=li.querySelector('.links');
+    const mk=(t,h)=>{const a=document.createElement('a'); a.target='_blank'; a.rel='noopener'; a.href=h; a.textContent=t; links.appendChild(a)};
+    mk('RAWG page','https://rawg.io/games/'+r[7]);
+    mk('Find on Steam','https://store.steampowered.com/search/?term='+enc(r[1]));
+    mk('Trailer search','https://www.youtube.com/results?search_query='+enc(r[1]+' game trailer'));
+    const sim=document.createElement('button'); sim.type='button'; sim.className='sim'; sim.textContent='Find similar';
+    sim.addEventListener('click',()=>{pick(k); window.scrollTo(0,0)}); links.appendChild(sim);
+    const sv=document.createElement('button'); sv.type='button'; sv.className='save'; sv.setAttribute('aria-pressed',saved); sv.textContent=saved?'Saved':'Save';
+    sv.addEventListener('click',()=>{const i=list.indexOf(r[0]); if(i>=0) list.splice(i,1); else list.push(r[0]); saveList(); sv.setAttribute('aria-pressed',i<0); sv.textContent=i<0?'Saved':'Save'; renderList()});
+    links.appendChild(sv);
+    return li;
+  }
+
+  // ---------- Discover ----------
+  function homeData(){
+    const fresh=[], soon=[];
+    rows.forEach((r,k)=>{
+      if(!hasTag(r)) return;
+      if(r[2]>TODAY){soon.push(k); return}
+      if(r[2]&&TD-toDays(r[2])<=90&&passSize(r)&&passQ(r)) fresh.push(k);
+    });
+    fresh.sort((a,b)=>(rows[b][2]-rows[a][2])||(rows[b][4]-rows[a][4]));
+    soon.sort((a,b)=>rows[a][2]-rows[b][2]);
+    return {fresh,soon};
+  }
+  function renderChips(){
+    const box=$('genres'); box.textContent='';
+    const cnt=new Map();
+    rows.forEach(r=>{ if(r[2]&&r[2]<=TODAY&&TD-toDays(r[2])<=90&&passSize(r)&&passQ(r)) r[6].forEach(t=>cnt.set(t,(cnt.get(t)||0)+1)) });
+    const mkc=(id,label,c)=>{const b=document.createElement('button'); b.type='button'; b.className='chip'; b.setAttribute('aria-pressed',id===genre); b.textContent=label;
+      if(c!=null){const s=document.createElement('small'); s.textContent=c; b.appendChild(s)}
+      b.addEventListener('click',()=>{genre=id; newShown=20; renderHome()}); box.appendChild(b)};
+    mkc(0,'All');
+    SH.map(([id,n])=>[id,n,cnt.get(id)||0]).filter(x=>x[2]>=5||x[0]===genre).sort((a,b)=>b[2]-a[2]).forEach(x=>mkc(x[0],x[1],x[2]));
+  }
+  function renderHome(){
+    renderChips();
+    const {fresh,soon}=homeData();
+    const nl=$('newlist'); nl.textContent='';
+    $('newmeta').textContent=fresh.length+' game'+(fresh.length===1?'':'s');
+    if(!fresh.length){const li=document.createElement('li'); li.className='empty'; li.textContent='Nothing matches these filters. Try a larger ratings limit or switch Ratings to Any.'; nl.appendChild(li)}
+    fresh.slice(0,newShown).forEach(k=>nl.appendChild(card(k)));
+    $('newmore').hidden=fresh.length<=newShown;
+    const sl=$('soonlist'); sl.textContent=''; $('soonsec').hidden=!soon.length; $('soonmeta').textContent=soon.length+' announced';
+    soon.slice(0,10).forEach(k=>sl.appendChild(card(k)));
+    const gems=[]; rows.forEach((r,k)=>{ if(r[4]>=15&&r[4]<=500&&r[3]>=84&&passSize(r)&&hasTag(r)&&r[2]<=TODAY) gems.push(k) });
+    let x=gemSeed*2147483647|0; const rnd=()=>{x=(x*1103515245+12345)&0x7fffffff;return x/0x7fffffff};
+    for(let i=gems.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1)); [gems[i],gems[j]]=[gems[j],gems[i]]}
+    const gl=$('gems'); gl.textContent='';
+    if(!gems.length){const li=document.createElement('li'); li.className='empty'; li.textContent='No hidden gems match this filter.'; gl.appendChild(li)}
+    gems.slice(0,8).forEach(k=>gl.appendChild(card(k)));
+  }
+
+  // ---------- Find similar ----------
+  function render(){
+    const res=$('res'); res.textContent=''; if(cur<0) return;
+    $('title').textContent='Like '+rows[cur][1];
+    $('meta').textContent=fmt(rows[cur][4])+' ratings · '+results.length+' match'+(results.length===1?'':'es');
+    if(!results.length){const li=document.createElement('li'); li.className='empty'; li.textContent='Nothing this small shares enough tags with this game. Raise the ratings limit or switch Ratings to Any.'; res.appendChild(li); $('more').hidden=true; return}
+    results.slice(0,shown).forEach(r=>res.appendChild(card(r.k,{shared:r.shared})));
+    $('more').hidden=results.length<=shown;
+  }
+  function pick(k,stay){ if(!stay) setTab('find'); cur=k; shown=24; $('q').value=rows[k][1]; hideSug(); results=similar(k); render(); }
+  $('more').addEventListener('click',()=>{shown+=24;render()});
+  $('newmore').addEventListener('click',()=>{newShown+=20;renderHome()});
+  $('shuf').addEventListener('click',()=>{gemSeed=Math.random();renderHome()});
+
+  // filters
+  [[0,'Any size'],[5000,'5K ratings'],[500,'500'],[100,'100'],[30,'30']].forEach(([v,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=l; b.setAttribute('aria-pressed',v===limit);
+    b.addEventListener('click',()=>{limit=v; [...$('seg').children].forEach(x=>x.setAttribute('aria-pressed',x===b)); newShown=20; renderHome(); if(cur>=0){results=similar(cur);shown=24;render()}});
+    $('seg').appendChild(b);
+  });
+  [[false,'Any'],[true,'Well rated']].forEach(([v,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=l; b.setAttribute('aria-pressed',v===qual);
+    b.title=v?'At least 3 ratings and 3.5 out of 5':'Include unrated and poorly rated games';
+    b.addEventListener('click',()=>{qual=v; [...$('qseg').children].forEach(x=>x.setAttribute('aria-pressed',x===b)); newShown=20; renderHome(); if(cur>=0){results=similar(cur);shown=24;render()}});
+    $('qseg').appendChild(b);
+  });
+
+  // autocomplete (page search and top-bar search share one implementation)
+  const hiders=[]; const hideSug=()=>hiders.forEach(f=>f());
+  function attachSearch(inp,ul,onPick){
+    let items=[], sel=-1;
+    const hide=()=>{ul.hidden=true; inp.setAttribute('aria-expanded','false'); sel=-1}; hiders.push(hide);
+    function show(v){
+      const t=norm(v); if(!t){hide();return}
+      const pre=[],sub=[];
+      for(let i=0;i<rows.length;i++){const n=NN[i]; if(n.startsWith(t)) pre.push(i); else if(n.includes(t)) sub.push(i)}
+      const by=(a,b)=>rows[b][4]-rows[a][4];
+      items=pre.sort(by).concat(sub.sort(by)).slice(0,8);
+      ul.textContent='';
+      if(!items.length){const li=document.createElement('li'); li.textContent='Not in the snapshot yet'; li.style.cursor='default'; ul.appendChild(li)}
+      items.forEach(k=>{const li=document.createElement('li'); li.setAttribute('role','option'); li.setAttribute('aria-selected','false');
+        li.innerHTML='<span></span><span class="f"></span>'; li.firstChild.textContent=rows[k][1]; li.lastChild.textContent=fmt(rows[k][4])+' ratings';
+        li.addEventListener('mousedown',e=>{e.preventDefault();onPick(k)}); ul.appendChild(li)});
+      ul.hidden=false; inp.setAttribute('aria-expanded','true'); sel=-1;
+    }
+    inp.addEventListener('input',e=>show(e.target.value));
+    inp.addEventListener('blur',()=>setTimeout(hide,120));
+    inp.addEventListener('keydown',e=>{
+      const els=[...ul.querySelectorAll('li[role=option]')];
+      if(e.key==='ArrowDown'||e.key==='ArrowUp'){ if(!els.length) return; e.preventDefault(); sel=(sel+(e.key==='ArrowDown'?1:-1)+els.length)%els.length; els.forEach((x,i)=>x.setAttribute('aria-selected',i===sel)); }
+      else if(e.key==='Enter'){ e.preventDefault(); const k=items[sel>=0?sel:0]; if(k!=null) onPick(k); }
+      else if(e.key==='Escape') hide();
+    });
+  }
+  attachSearch($('q'),$('sug'),k=>pick(k));
+  attachSearch($('gq'),$('gsug'),k=>{pick(k); $('gq').value=''; $('gq').blur(); window.scrollTo(0,0)});
+
+  // shortlist
+  function renderList(){
+    const ol=$('listol'); ol.textContent='';
+    const idx=new Map(rows.map((r,i)=>[r[0],i]));
+    list.forEach(id=>{const k=idx.get(id); if(k==null) return; const li=document.createElement('li'); li.textContent=rows[k][1]+' ('+reviewText(rows[k])+')'; ol.appendChild(li)});
+    $('listsum').textContent='Your shortlist ('+list.length+')';
+    $('copy').hidden=!list.length;
+    if(!list.length){const li=document.createElement('li'); li.style.listStyle='none'; li.style.marginLeft='-1.2em'; li.style.color='var(--muted)'; li.textContent='Save games from the results to keep them here.'; ol.appendChild(li)}
+  }
+  $('copy').addEventListener('click',()=>{
+    const idx=new Map(rows.map((r,i)=>[r[0],i]));
+    const txt=list.map(id=>{const k=idx.get(id); return k==null?'':rows[k][1]+' https://rawg.io/games/'+rows[k][7]}).filter(Boolean).join('\n');
+    const done=m=>{$('copied').textContent=m; setTimeout(()=>$('copied').textContent='',2200)};
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(()=>done('Copied'),()=>done('Select the list to copy'))} else done('Select the list to copy');
+  });
+
+  // tabs
+  function setTab(t){ui.tab=t; saveUi(); const home=t==='home'; $('viewHome').hidden=!home; $('viewFind').hidden=home; $('tabHome').setAttribute('aria-selected',home); $('tabFind').setAttribute('aria-selected',!home)}
+  $('tabHome').addEventListener('click',()=>setTab('home'));
+  $('tabFind').addEventListener('click',()=>setTab('find'));
+
+  // view toggle
+  const LISTS=['newlist','soonlist','gems','res'];
+  function applyView(){LISTS.forEach(id=>$(id).classList.toggle('grid',view==='grid')); [...$('vseg').children].forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===view))}
+  [['list','List'],['grid','Pictures']].forEach(([v,l])=>{const b=document.createElement('button'); b.type='button'; b.textContent=l; b.dataset.v=v;
+    b.addEventListener('click',()=>{view=v; ui.view=v; saveUi(); applyView()}); $('vseg').appendChild(b)});
+  applyView();
+  // jump links
+  const reduce=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
+  [['secNew','New releases'],['soonsec','Coming soon'],['secGems','Hidden gems'],['listbox','My shortlist']].forEach(([id,l])=>{
+    const b=document.createElement('button'); b.type='button'; b.textContent=l;
+    b.addEventListener('click',()=>{const el=$(id); if(el.tagName==='DETAILS') el.open=true; el.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}); $('jump').appendChild(b); if(id==='soonsec'){const sync=()=>{b.hidden=$('soonsec').hidden}; sync(); new MutationObserver(sync).observe($('soonsec'),{attributes:true,attributeFilter:['hidden']})}});
+  // back to top
+  $('top').addEventListener('click',()=>window.scrollTo({top:0,behavior:reduce?'auto':'smooth'}));
+  addEventListener('scroll',()=>{$('top').hidden=window.scrollY<700},{passive:true});
+  // starting state
+  const byName=new Map(rows.map((r,i)=>[norm(r[1]),i]));
+  const tryNames=['Hades','Hollow Knight','Stardew Valley','Celeste','Slay the Spire','Balatro','Dead Cells','Hotline Miami'];
+  const present=tryNames.map(n=>byName.get(norm(n))).filter(k=>k!=null).slice(0,6);
+  present.forEach(k=>{const b=document.createElement('button'); b.className='chip'; b.type='button'; b.textContent=rows[k][1]; b.addEventListener('click',()=>pick(k)); $('chips').appendChild(b)});
+  renderList(); renderHome();
+  if(present.length) pick(present[0],true);
+  $('q').value='';
+  if(ui.tab==='find') setTab('find');
+})();
+</script>
